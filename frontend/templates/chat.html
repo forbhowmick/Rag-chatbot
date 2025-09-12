@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Document Chat Assistant</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .navbar h1 {
+            color: #4c51bf;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .navbar .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .navbar .logo i {
+            font-size: 28px;
+            color: #667eea;
+        }
+        
+        .logout-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(238, 90, 82, 0.4);
+            text-decoration: none;
+            color: white;
+        }
+        
+        .status-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            margin-bottom: 20px;
+        }
+        
+        .status-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            color: #4c51bf;
+            font-weight: 600;
+        }
+        
+        .status-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.05);
+        }
+        
+        .status-available {
+            color: #10b981;
+            border-left: 4px solid #10b981;
+        }
+        
+        .status-limited {
+            color: #f59e0b;
+            border-left: 4px solid #f59e0b;
+        }
+        
+        .chat-container {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .chat-header {
+            background: linear-gradient(45deg, #4c51bf, #667eea);
+            color: white;
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .chat-history {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            max-height: 500px;
+            background: #f8fafc;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .user-message {
+            text-align: right;
+        }
+        
+        .user-message .message-bubble {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 12px 18px;
+            border-radius: 18px 18px 5px 18px;
+            display: inline-block;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+        
+        .bot-message .message-bubble {
+            background: white;
+            color: #333;
+            padding: 12px 18px;
+            border-radius: 18px 18px 18px 5px;
+            display: inline-block;
+            max-width: 70%;
+            word-wrap: break-word;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+        }
+        
+        .input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .query-input {
+            flex: 1;
+            padding: 12px 18px;
+            border: 2px solid #e5e7eb;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .query-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .send-btn {
+            background: linear-gradient(45deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        }
+        
+        .send-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .typing-indicator {
+            display: none;
+            padding: 10px 18px;
+            color: #6b7280;
+            font-style: italic;
+        }
+        
+        .api-info {
+            background: linear-gradient(45deg, #f59e0b, #d97706);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+        
+        .api-info a {
+            color: white;
+            text-decoration: underline;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .navbar {
+                padding: 10px 15px;
+            }
+            
+            .navbar h1 {
+                font-size: 20px;
+            }
+            
+            .chat-history {
+                max-height: 400px;
+            }
+            
+            .user-message .message-bubble,
+            .bot-message .message-bubble {
+                max-width: 85%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="navbar">
+            <div class="logo">
+                <i class="fas fa-robot"></i>
+                <h1>RAG Document Assistant</h1>
+            </div>
+            <a href="/logout" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    
+        <div class="status-card">
+            <div class="status-header">
+                <i class="fas fa-info-circle"></i>
+                <span>System Status</span>
+            </div>
+            <ul class="status-list">
+                <li class="status-item">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Selected documents: <strong>{{ selected_docs_count }}</strong></span>
+                    {% if selected_docs_count == 0 %}
+                        <a href="/docs" style="margin-left: 10px; color: #667eea;">Select Documents</a>
+                    {% endif %}
+                </li>
+                {% if gemini_available %}
+                    <li class="status-item status-available">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Google Gemini AI configured - Full RAG functionality available</span>
+                    </li>
+                {% else %}
+                    <li class="status-item status-limited">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Google API key not configured - Limited functionality</span>
+                    </li>
+                {% endif %}
+            </ul>
+            {% if not gemini_available %}
+            <div class="api-info">
+                <p><strong>To enable full RAG functionality:</strong></p>
+                <p>Set your Gemini API key as an environment variable: <code>GEMINI_API_KEY=your-key-here</code></p>
+                <p>Get your key from: <a href="https://aistudio.google.com/" target="_blank">Google AI Studio</a></p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="chat-container">
+            <div class="chat-header">
+                <i class="fas fa-comments"></i>
+                <span>Chat with your documents</span>
+                <div style="margin-left: auto; font-size: 14px;">
+                    Powered by <i class="fas fa-brain"></i> Gemini AI
+                </div>
+            </div>
+            
+            <div id="chat-history" class="chat-history">
+                <div class="message bot-message">
+                    <div class="message-bubble">
+                        <i class="fas fa-robot" style="margin-right: 8px;"></i>
+                        Hello! I'm your RAG assistant. I can help you find information from your selected documents. 
+                        {% if selected_docs_count > 0 %}
+                            Ask me anything about your {{ selected_docs_count }} document{{ 's' if selected_docs_count != 1 else '' }}!
+                        {% else %}
+                            Please <a href="/docs">select some documents</a> first to get started.
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="typing-indicator" id="typing-indicator">
+                <i class="fas fa-robot"></i> Assistant is thinking...
+            </div>
+            
+            <div class="input-container">
+                <div class="input-group">
+                    <input type="text" id="query" class="query-input" placeholder="Ask a question about your documents..." 
+                           {% if selected_docs_count == 0 %}disabled{% endif %}>
+                    <button onclick="sendQuery()" class="send-btn" id="send-btn" 
+                            {% if selected_docs_count == 0 %}disabled{% endif %}>
+                        <i class="fas fa-paper-plane"></i>
+                        Send
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function sendQuery() {
+            var query = $('#query').val().trim();
+            if (!query) return;
+            
+            // Add user message
+            $('#chat-history').append(
+                '<div class="message user-message">' +
+                    '<div class="message-bubble">' +
+                        '<i class="fas fa-user" style="margin-right: 8px;"></i>' +
+                        query +
+                    '</div>' +
+                '</div>'
+            );
+            
+            // Clear input and disable button
+            $('#query').val('').prop('disabled', true);
+            $('#send-btn').prop('disabled', true);
+            $('#typing-indicator').show();
+            
+            // Scroll to bottom
+            $('#chat-history').scrollTop($('#chat-history')[0].scrollHeight);
+            
+            $.ajax({
+                url: '/query',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({query: query}),
+                success: function(data) {
+                    $('#typing-indicator').hide();
+                    $('#chat-history').append(
+                        '<div class="message bot-message">' +
+                            '<div class="message-bubble">' +
+                                '<i class="fas fa-robot" style="margin-right: 8px;"></i>' +
+                                data.response +
+                            '</div>' +
+                        '</div>'
+                    );
+                    // Scroll to bottom
+                    $('#chat-history').scrollTop($('#chat-history')[0].scrollHeight);
+                },
+                error: function(xhr, status, error) {
+                    $('#typing-indicator').hide();
+                    $('#chat-history').append(
+                        '<div class="message bot-message">' +
+                            '<div class="message-bubble" style="background: #fee2e2; border-color: #fca5a5; color: #dc2626;">' +
+                                '<i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i>' +
+                                'Sorry, there was an error processing your request. Please try again.' +
+                            '</div>' +
+                        '</div>'
+                    );
+                    $('#chat-history').scrollTop($('#chat-history')[0].scrollHeight);
+                },
+                complete: function() {
+                    $('#query').prop('disabled', false);
+                    $('#send-btn').prop('disabled', false);
+                    $('#query').focus();
+                }
+            });
+        }
+        
+        // Handle Enter key press
+        $('#query').keypress(function(e) {
+            if (e.which == 13 && !$('#send-btn').prop('disabled')) {
+                sendQuery();
+            }
+        });
+        
+        // Focus on input when page loads
+        $(document).ready(function() {
+            $('#query').focus();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+flask
+flask-session
+google-api-python-client
+google-auth-oauthlib
+google-auth-httplib2
+google-generativeai
+langchain
+langchain-google-genai
+langchain-community
+faiss-cpu
+requests
+python-dotenv
+PyPDF2
+python-pptx

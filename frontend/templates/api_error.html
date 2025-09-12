@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Error</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        .error-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .error-header {
+            color: #d32f2f;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .error-details {
+            background-color: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 15px;
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #4285f4;
+            color: white;
+            padding: 10px 15px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <h1 class="error-header">Google API Error</h1>
+        
+        <p>{{ error_message }}</p>
+        
+        <h3>Possible solutions:</h3>
+        <ul>
+            <li>Make sure the Google Cloud project is properly configured with the Drive API enabled</li>
+            <li>Check that the OAuth consent screen is configured correctly</li>
+            <li>Verify that your application has the necessary API permissions</li>
+            <li>Try logging in again with your Google account</li>
+        </ul>
+        
+        <div class="error-details">
+            <h4>Error details:</h4>
+            <pre>{{ error_details }}</pre>
+        </div>
+        
+        <a href="/logout" class="button">Logout and Try Again</a>
+    </div>
+</body>
+</html>

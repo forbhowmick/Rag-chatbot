@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Documents - RAG Assistant</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .navbar h1 {
+            color: #4c51bf;
+            font-size: 24px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logout-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(238, 90, 82, 0.4);
+            text-decoration: none;
+            color: white;
+        }
+        
+        .content-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .no-docs-message {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .no-docs-message i {
+            font-size: 64px;
+            color: #9ca3af;
+            margin-bottom: 20px;
+        }
+        
+        .no-docs-message h3 {
+            color: #374151;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+        
+        .reasons-list {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #f59e0b;
+        }
+        
+        .reasons-list ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .reasons-list li {
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .reasons-list li i {
+            color: #f59e0b;
+            width: 20px;
+        }
+        
+        .doc-selection-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        .doc-selection-header h2 {
+            color: #374151;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .select-all-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #6b7280;
+        }
+        
+        .documents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .document-card {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .document-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        .document-card.selected {
+            border-color: #10b981;
+            background: linear-gradient(45deg, #f0fdf4, #ecfdf5);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+        }
+        
+        .document-card input[type="checkbox"] {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 20px;
+            height: 20px;
+            accent-color: #10b981;
+        }
+        
+        .document-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        .doc-google { color: #4285f4; }
+        .doc-pdf { color: #ef4444; }
+        .doc-text { color: #6b7280; }
+        .doc-sheet { color: #0f9d58; }
+        .doc-powerpoint { color: #d97706; }
+        
+        .document-name {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 5px;
+            word-break: break-word;
+        }
+        
+        .document-type {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .submit-container {
+            text-align: center;
+            padding: 20px 0;
+            border-top: 2px solid #e5e7eb;
+        }
+        
+        .submit-btn {
+            background: linear-gradient(45deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+        
+        .submit-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .selected-count {
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+        
+        .supported-formats {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .supported-formats h4 {
+            color: #0369a1;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .format-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .format-tag {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .navbar {
+                padding: 10px 15px;
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+            
+            .navbar h1 {
+                font-size: 20px;
+            }
+            
+            .documents-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .doc-selection-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="navbar">
+            <h1>
+                <i class="fas fa-file-alt"></i>
+                Document Selection
+            </h1>
+            <a href="/logout" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+        
+        <div class="content-card">
+    
+            {% if no_docs %}
+                <div class="no-docs-message">
+                    <i class="fas fa-folder-open"></i>
+                    <h3>No documents found in your Google Drive</h3>
+                    <p>We couldn't find any compatible documents in your Google Drive.</p>
+                    
+                    <div class="reasons-list">
+                        <h4><i class="fas fa-info-circle"></i> Possible reasons:</h4>
+                        <ul>
+                            <li><i class="fas fa-file"></i>You don't have any supported document types in your Drive</li>
+                            <li><i class="fas fa-key"></i>The app doesn't have sufficient permissions to access your files</li>
+                            <li><i class="fas fa-wifi"></i>There was an issue connecting to Google Drive API</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="supported-formats">
+                        <h4><i class="fas fa-check-circle"></i> Supported formats:</h4>
+                        <div class="format-list">
+                            <span class="format-tag">Google Docs</span>
+                            <span class="format-tag">Google Sheets</span>
+                            <span class="format-tag">Google Slides</span>
+                            <span class="format-tag">PDF Files</span>
+                            <span class="format-tag">PowerPoint</span>
+                            <span class="format-tag">Text Files</span>
+                        </div>
+                    </div>
+                    
+                    <p style="margin-top: 20px;">
+                        <a href="/logout" class="logout-btn" style="margin-right: 10px;">
+                            <i class="fas fa-sign-out-alt"></i> Re-authenticate
+                        </a>
+                        <span style="color: #6b7280;">or upload some documents to your Google Drive</span>
+                    </p>
+                </div>
+            {% else %}
+                <form action="/select_docs" method="post" id="doc-form">
+                    {% if docs %}
+                        <div class="doc-selection-header">
+                            <h2>
+                                <i class="fas fa-check-square"></i>
+                                Select Documents for RAG
+                            </h2>
+                            <div class="select-all-container">
+                                <input type="checkbox" id="select-all">
+                                <label for="select-all">Select All</label>
+                            </div>
+                        </div>
+                        
+                        <div class="supported-formats">
+                            <h4><i class="fas fa-info-circle"></i> Supported formats include:</h4>
+                            <div class="format-list">
+                                <span class="format-tag"><i class="fab fa-google"></i> Google Docs</span>
+                                <span class="format-tag"><i class="fab fa-google"></i> Google Sheets</span>
+                                <span class="format-tag"><i class="fab fa-google"></i> Google Slides</span>
+                                <span class="format-tag"><i class="fas fa-file-pdf"></i> PDF Files</span>
+                                <span class="format-tag"><i class="fas fa-file-powerpoint"></i> PowerPoint</span>
+                                <span class="format-tag"><i class="fas fa-file-alt"></i> Text Files</span>
+                            </div>
+                        </div>
+                        
+                        <div class="selected-count" id="selected-count" style="display: none;">
+                            <i class="fas fa-check"></i> 0 documents selected
+                        </div>
+                        
+                        <div class="documents-grid">
+                            {% for doc in docs %}
+                            <div class="document-card" onclick="toggleDocument('{{ doc.id }}')">
+                                <input type="checkbox" id="doc_{{ doc.id }}" name="doc_ids" value="{{ doc.id }}" onclick="event.stopPropagation()">
+                                {% if doc.mimeType == 'application/vnd.google-apps.document' %}
+                                    <i class="fas fa-file-alt document-icon doc-google"></i>
+                                    <div class="document-type">Google Doc</div>
+                                {% elif doc.mimeType == 'application/vnd.google-apps.spreadsheet' %}
+                                    <i class="fas fa-file-excel document-icon doc-sheet"></i>
+                                    <div class="document-type">Google Sheet</div>
+                                {% elif doc.mimeType == 'application/vnd.google-apps.presentation' %}
+                                    <i class="fas fa-file-powerpoint document-icon doc-google"></i>
+                                    <div class="document-type">Google Slides</div>
+                                {% elif doc.mimeType == 'application/pdf' %}
+                                    <i class="fas fa-file-pdf document-icon doc-pdf"></i>
+                                    <div class="document-type">PDF Document</div>
+                                {% elif doc.mimeType == 'text/plain' %}
+                                    <i class="fas fa-file-alt document-icon doc-text"></i>
+                                    <div class="document-type">Text File</div>
+                                {% elif doc.mimeType in ['application/vnd.openxmlformats-officedocument.presentationml.presentation', 'application/vnd.ms-powerpoint'] %}
+                                    <i class="fas fa-file-powerpoint document-icon doc-powerpoint"></i>
+                                    <div class="document-type">PowerPoint</div>
+                                {% else %}
+                                    <i class="fas fa-file document-icon"></i>
+                                    <div class="document-type">Document</div>
+                                {% endif %}
+                                <div class="document-name">{{ doc.name }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="submit-container">
+                            <button type="submit" class="submit-btn" id="submit-btn" disabled>
+                                <i class="fas fa-arrow-right"></i>
+                                Continue to Chat
+                            </button>
+                            <p style="color: #6b7280; margin-top: 10px; font-size: 14px;">
+                                Selected documents will be processed and made available for Q&A
+                            </p>
+                        </div>
+                    {% else %}
+                        <div class="no-docs-message">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h3>Unable to load documents</h3>
+                            <p>Please <a href="/logout" class="logout-btn">log out</a> and try again.</p>
+                        </div>
+                    {% endif %}
+                </form>
+            {% endif %}
+        </div>
+    </div>
+    
+    <script>
+        function toggleDocument(docId) {
+            const checkbox = document.getElementById('doc_' + docId);
+            const card = checkbox.closest('.document-card');
+            
+            checkbox.checked = !checkbox.checked;
+            
+            if (checkbox.checked) {
+                card.classList.add('selected');
+            } else {
+                card.classList.remove('selected');
+            }
+            
+            updateSelectedCount();
+        }
+        
+        function updateSelectedCount() {
+            const checkboxes = document.querySelectorAll('input[name="doc_ids"]');
+            const selectedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+            const countElement = document.getElementById('selected-count');
+            const submitBtn = document.getElementById('submit-btn');
+            
+            if (selectedCount > 0) {
+                countElement.style.display = 'inline-block';
+                countElement.innerHTML = `<i class="fas fa-check"></i> ${selectedCount} document${selectedCount !== 1 ? 's' : ''} selected`;
+                submitBtn.disabled = false;
+            } else {
+                countElement.style.display = 'none';
+                submitBtn.disabled = true;
+            }
+            
+            // Update select all checkbox
+            const selectAllCheckbox = document.getElementById('select-all');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = selectedCount === checkboxes.length;
+                selectAllCheckbox.indeterminate = selectedCount > 0 && selectedCount < checkboxes.length;
+            }
+        }
+        
+        // Select all functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectAllCheckbox = document.getElementById('select-all');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.addEventListener('change', function() {
+                    const checkboxes = document.querySelectorAll('input[name="doc_ids"]');
+                    const cards = document.querySelectorAll('.document-card');
+                    
+                    checkboxes.forEach((checkbox, index) => {
+                        checkbox.checked = selectAllCheckbox.checked;
+                        if (selectAllCheckbox.checked) {
+                            cards[index].classList.add('selected');
+                        } else {
+                            cards[index].classList.remove('selected');
+                        }
+                    });
+                    
+                    updateSelectedCount();
+                });
+            }
+            
+            // Add change listeners to individual checkboxes
+            const checkboxes = document.querySelectorAll('input[name="doc_ids"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', updateSelectedCount);
+            });
+        });
+    </script>
+</body>
+</html>
