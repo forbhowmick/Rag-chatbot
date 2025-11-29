@@ -15,6 +15,7 @@ from flask_session import Session
 from PyPDF2 import PdfReader
 from pptx import Presentation
 from pathlib import Path
+import json
 
 # Load environment variables from .env file
 # Load environment variables
@@ -54,7 +55,7 @@ app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hour
 Session(app)
 
 # Google OAuth setup
-CLIENT_SECRETS_FILE = "backend/client_secret.json"
+CLIENT_SECRETS_FILE = json.loads(os.environ["CLIENT_SECRET_JSON"])
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly', 'https://www.googleapis.com/auth/documents.readonly']
 API_SERVICE_NAME = 'drive'
 API_VERSION = 'v3'
