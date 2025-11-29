@@ -55,7 +55,7 @@ API_VERSION = 'v3'
 
 # Environment Variables and AI Service Initialization
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
-GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-1.5-flash')
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')
 
 # Initialize Gemini AI services
 embeddings = None
