@@ -14,6 +14,7 @@ import logging
 from flask_session import Session
 from PyPDF2 import PdfReader
 from pptx import Presentation
+from pathlib import Path
 
 # Load environment variables from .env file
 # Load environment variables
@@ -27,10 +28,15 @@ except ImportError:
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 # Logging setup
+
+logs_dir = Path(__file__).resolve().parent / "logs"
+logs_dir.mkdir(parents=True, exist_ok=True)
+
+
 logging.basicConfig(
-    filename='backend/logs/app.log', 
-    level=logging.INFO,  # Changed from DEBUG to INFO for production
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    filename=str(logs_dir / "app.log"),
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
 app = Flask(__name__, 
