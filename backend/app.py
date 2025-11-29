@@ -109,7 +109,7 @@ def login():
         flow = Flow.from_client_secrets_file(
             CLIENT_SECRETS_FILE, 
             scopes=SCOPES,
-            redirect_uri="http://localhost:5000/oauth2callback"
+            redirect_uri="https://rag-chatbot-zd5g.onrender.com/oauth2callback"
         )
         
         # Request offline access to get refresh token
