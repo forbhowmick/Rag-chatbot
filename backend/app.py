@@ -54,6 +54,23 @@ app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hour
 # Initialize Flask-Session
 Session(app)
 
+client_secret_raw = os.environ.get("CLIENT_SECRET_JSON")
+
+if client_secret_raw:
+    backend_dir = Path(__file__).resolve().parent
+    backend_dir.mkdir(parents=True, exist_ok=True)
+
+    # 3. Write the file to backend/client_secret.json
+    client_secret_path = backend_dir / "client_secret.json"
+    
+    with open(client_secret_path, "w") as f:
+        f.write(client_secret_raw)
+
+    print(f"client_secret.json created at: {client_secret_path}")
+
+else:
+    print("ERROR: CLIENT_SECRET_JSON environment variable not set!")
+
 # Google OAuth setup
 CLIENT_SECRETS_FILE = json.loads(os.environ["CLIENT_SECRET_JSON"])
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly', 'https://www.googleapis.com/auth/documents.readonly']
@@ -164,7 +181,7 @@ def oauth2callback():
         flow = Flow.from_client_secrets_file(
             CLIENT_SECRETS_FILE, 
             scopes=SCOPES,
-            redirect_uri="http://localhost:5000/oauth2callback"
+            redirect_uri="https://rag-chatbot-zd5g.onrender.com/oauth2callback"
         )
         
         # Get full URL for token exchange
