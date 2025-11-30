@@ -1,27 +1,4 @@
 import os
-import logging
-from pathlib import Path
-
-# ================= CLIENT_SECRET_JSON Startup Writer =================
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
-
-backend_dir = Path(__file__).resolve().parent
-client_secret_path = backend_dir / 'client_secret.json'
-
-client_secret_raw = os.environ.get('CLIENT_SECRET_JSON')
-if client_secret_raw:
-    try:
-        backend_dir.mkdir(parents=True, exist_ok=True)
-        client_secret_path.write_text(client_secret_raw)
-        logging.info(f'Wrote CLIENT_SECRET_JSON to {client_secret_path}')
-    except Exception as e:
-        logging.exception(f'Failed writing client secret file: {e}')
-else:
-    logging.warning('CLIENT_SECRET_JSON env var not set! OAuth may fail.')
-# =====================================================================
-
-
-import os
 import sys
 import io
 from flask import Flask, redirect, url_for, session, request, render_template, jsonify
@@ -90,7 +67,7 @@ logging.info("client_secret.json exists? %s", client_secret_path.exists())
 logging.info("Effective redirect base: %s", os.environ.get("REDIRECT_BASE", "not set"))
 logging.info("ENV keys present: %s", sorted(k for k in os.environ.keys() if k.lower().find("client")!=-1 or k.lower().find("oauth")!=-1))
 # Google OAuth setup
-CLIENT_SECRETS_FILE = json.loads(os.environ["CLIENT_SECRET_JSON"])
+CLIENT_SECRETS_FILE = str(Path(__file__).resolve().parent / 'client_secret.json')
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly', 'https://www.googleapis.com/auth/documents.readonly']
 API_SERVICE_NAME = 'drive'
 API_VERSION = 'v3'
