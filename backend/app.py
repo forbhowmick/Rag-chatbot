@@ -1,4 +1,27 @@
 import os
+import logging
+from pathlib import Path
+
+# ================= CLIENT_SECRET_JSON Startup Writer =================
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
+
+backend_dir = Path(__file__).resolve().parent
+client_secret_path = backend_dir / 'client_secret.json'
+
+client_secret_raw = os.environ.get('CLIENT_SECRET_JSON')
+if client_secret_raw:
+    try:
+        backend_dir.mkdir(parents=True, exist_ok=True)
+        client_secret_path.write_text(client_secret_raw)
+        logging.info(f'Wrote CLIENT_SECRET_JSON to {client_secret_path}')
+    except Exception as e:
+        logging.exception(f'Failed writing client secret file: {e}')
+else:
+    logging.warning('CLIENT_SECRET_JSON env var not set! OAuth may fail.')
+# =====================================================================
+
+
+import os
 import sys
 import io
 from flask import Flask, redirect, url_for, session, request, render_template, jsonify
@@ -16,6 +39,7 @@ from PyPDF2 import PdfReader
 from pptx import Presentation
 from pathlib import Path
 import json
+import traceback
 
 # Load environment variables from .env file
 # Load environment variables
@@ -34,11 +58,7 @@ logs_dir = Path(__file__).resolve().parent / "logs"
 logs_dir.mkdir(parents=True, exist_ok=True)
 
 
-logging.basicConfig(
-    filename=str(logs_dir / "app.log"),
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 app = Flask(__name__, 
             template_folder=os.path.abspath('frontend/templates'), 
@@ -55,22 +75,20 @@ app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hour
 Session(app)
 
 client_secret_raw = os.environ.get("CLIENT_SECRET_JSON")
+backend_dir = Path(__file__).resolve().parent
+client_secret_path = backend_dir / "client_secret.json"
 
 if client_secret_raw:
-    backend_dir = Path(__file__).resolve().parent
+    logging.info("CLIENT_SECRET_JSON found in env — writing file to %s", client_secret_path)
     backend_dir.mkdir(parents=True, exist_ok=True)
-
-    # 3. Write the file to backend/client_secret.json
-    client_secret_path = backend_dir / "client_secret.json"
-    
-    with open(client_secret_path, "w") as f:
-        f.write(client_secret_raw)
-
-    print(f"client_secret.json created at: {client_secret_path}")
-
+    client_secret_path.write_text(client_secret_raw)
 else:
-    print("ERROR: CLIENT_SECRET_JSON environment variable not set!")
+    logging.warning("CLIENT_SECRET_JSON env var NOT set!")
 
+# Log debug info about file / env presence
+logging.info("client_secret.json exists? %s", client_secret_path.exists())
+logging.info("Effective redirect base: %s", os.environ.get("REDIRECT_BASE", "not set"))
+logging.info("ENV keys present: %s", sorted(k for k in os.environ.keys() if k.lower().find("client")!=-1 or k.lower().find("oauth")!=-1))
 # Google OAuth setup
 CLIENT_SECRETS_FILE = json.loads(os.environ["CLIENT_SECRET_JSON"])
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly', 'https://www.googleapis.com/auth/documents.readonly']
